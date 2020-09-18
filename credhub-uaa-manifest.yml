@@ -1,0 +1,265 @@
+---
+name: credhub-uaa
+instance_groups:
+- name: credhub-uaa
+  azs:
+  - z1
+  instances: 1
+  vm_type: t2.small
+  persistent_disk_type: 1GB
+  stemcell: xenial
+  vm_extensions:
+  - credhublb
+  networks:
+  - name: ((deployment-network))
+#    static_ips:
+#    - ((internal-ip-address))
+  jobs:
+  - name: uaa
+    release: uaa
+    properties:
+      encryption:
+        active_key_label: 'key-1'
+        encryption_keys:
+          - label: 'key-1'
+            passphrase: "((uaa_encryption_key))"
+      login:
+        saml:
+          serviceProviderCertificate: ((uaa_login_saml.certificate))
+          serviceProviderKey: ((uaa_login_saml.private_key))
+      uaa:
+        clients:
+          admin:
+            authorized-grant-types: client_credentials
+            scope: uaa.none
+            authorities: uaa.admin,clients.read,clients.write,clients.secret,scim.read,scim.write,clients.admin
+            secret: "((uaa_admin_client_secret))"
+          credhub_cli:
+            authorized-grant-types: password,refresh_token
+            authorities: uaa.none
+            scope: credhub.read,credhub.write
+            secret: "" # credhub expects this to be empty
+            access-token-validity: 120
+            refresh-token-validity: 1800
+            override: true
+          concourse_client:
+            authorized-grant-types: client_credentials
+            authorities: credhub.read,credhub.write
+            scope: credhub.read,credhub.write
+            secret: "((concourse_credhub_client_secret))"
+            access-token-validity: 120
+            refresh-token-validity: 1800
+            override: true
+        jwt:
+          policy:
+            active_key_id: key-1
+            keys:
+              key-1:
+                signingKey: ((uaa_jwt_signing_key.private_key))
+        scim:
+          users:
+            - name: admin
+              password: "((cf_admin_password))"
+              groups:
+                - uaa.admin
+            - name: credhub
+              password: "((credhub_user_password))"
+              groups:
+                - credhub.read
+                - credhub.write
+        sslCertificate: ((uaa_ssl.certificate))
+        sslPrivateKey: ((uaa_ssl.private_key))
+        url: "((uaa_external_url))"
+      uaadb:
+        address: ((db_host))
+        tls: disabled
+        databases:
+        - name: uaadb
+          tag: uaa
+        db_scheme: postgres
+        port: ((db_port))
+        roles:
+        - name: uaaadmin
+          password: "((uaa_db_user_password))"
+          tag: admin
+  - name: credhub
+    release: credhub
+    properties:
+      credhub:
+        port: 8844
+        tls:
+          certificate: ((credhub_ssl.certificate))
+          private_key: ((credhub_ssl.private_key))
+        data_storage:
+          type: postgres
+          username: credhubadmin
+          password: ((credhub_db_user_password))
+          host: ((db_host))
+          port: ((db_port))
+          database: credhub
+          require_tls: false
+        authentication:
+          uaa:
+            ca_certs:
+              - ((credhub-ca.certificate))
+            enabled: true
+            url: "((uaa_external_url))"
+            wait_for_start: true
+        encryption:
+          keys:
+            - provider_name: internal-provider
+              key_properties:
+                encryption_password: "((credhub_encryption_key))"
+              active: true
+          providers:
+            - name: internal-provider
+              type: internal
+        authorization:
+          acls:
+            enabled: true
+          permissions:
+            - path: /*
+              actors:
+                - uaa-client:concourse_client
+                - uaa-client:credhub_cli
+              operations:
+                - read
+                - write
+                - delete
+                - read_acl
+                - write_acl
+  - name: bpm
+    release: bpm
+  - name: postgres
+    release: postgres
+    properties:
+      databases:
+        address: 127.0.0.1
+        port: 5432
+        databases:
+        - name: credhub
+        - name: uaadb
+        roles:
+        - name: admin
+          password: ((database-admin))
+        - name: uaaadmin
+          password: ((uaa_db_user_password))
+        - name: credhubadmin
+          password: ((credhub_db_user_password))
+        tls:
+          ca: ((database-tls.ca))
+          certificate: ((database-tls.certificate))
+          private_key: ((database-tls.private_key))
+
+releases:
+- name: uaa
+  version: "74.25.0"
+  url: "https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=74.25.0"
+  sha1: "7eb46ce8d64d11e3bcfb52fc7c26c1e72085fd69"
+
+- name: "credhub"
+  version: "2.9.0"
+  url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.9.0"
+  sha1: "36d3a92588c33bc3a7ce54cd4714c96cc7d1bee2"
+
+- name: postgres
+  version: "((postgres_version))"
+
+- name: bpm
+  version: "((bpm_version))"
+
+variables:
+- name: uaa_encryption_key
+  type: password
+
+- name: uaa_admin_client_secret
+  type: password
+
+- name: cf_admin_password
+  type: password
+
+- name: uaa_jwt_signing_key
+  type: rsa
+
+- name: concourse_credhub_client_secret
+  type: password
+
+- name: credhub_client_secret
+  type: password
+
+- name: credhub_user_password
+  type: password
+
+- name: credhub_encryption_key
+  type: password
+
+- name: credhub_db_user_password
+  type: password
+
+- name: uaa_db_user_password
+  type: password
+
+- name: database-admin
+  type: password
+
+- name: credhub-ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: CredHub CA
+
+- name: database-tls
+  type: certificate
+  options:
+    ca: credhub-ca
+    common_name: ((external-ip-address))
+    alternative_names:
+    - ((external-ip-address))
+   # - ((internal-ip-address))
+    - 127.0.0.1
+    - localhost
+
+- name: uaa_ssl
+  type: certificate
+  options:
+    ca: credhub-ca
+    common_name: ((external-ip-address))
+    alternative_names:
+    - ((external-ip-address))
+   # - ((internal-ip-address))
+    - 127.0.0.1
+    - localhost
+
+- name: credhub_ssl
+  type: certificate
+  options:
+    ca: credhub-ca
+    common_name: ((external-ip-address))
+    alternative_names:
+    - ((external-ip-address))
+   # - ((internal-ip-address))
+    - 127.0.0.1
+    - localhost
+
+- name: uaa_login_saml
+  type: certificate
+  options:
+    ca: credhub-ca
+    common_name: ((external-ip-address))
+    alternative_names:
+    - ((external-ip-address))
+   # - ((internal-ip-address))
+    - 127.0.0.1
+    - localhost
+
+stemcells:
+- alias: xenial
+  os: ubuntu-xenial
+  version: latest
+
+update:
+  canaries: 1
+  canary_watch_time: 10000-200000
+  max_in_flight: 3
+  serial: false
+  update_watch_time: 10000-200000

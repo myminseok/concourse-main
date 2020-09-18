@@ -1,0 +1,15 @@
+
+credhub_url: "https://concourse.pcfdemo.net:8844"
+credhub_client_id: "concourse_client"
+
+
+## bosh int credhub-vars-store.yml --path=/concourse_credhub_client_secret
+credhub_client_secret: "yo2j2ztxicr3d0ifgckv"
+
+
+## bosh int credhub-vars-store.yml --path=/credhub-ca/ca
+credhub_ca_cert: |
+  -----BEGIN CERTIFICATE-----
+  ... eh7CHP5CSnlpxrQgsn5tET0K2IYylZ
+  jJY97pb2y8MaGP+y5mKBrFMpAAgzBiom
+  -----END CERTIFICATE-----

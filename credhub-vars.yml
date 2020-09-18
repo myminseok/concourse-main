@@ -1,0 +1,12 @@
+---
+deployment-network: private 
+external-ip-address: "concourse.pcfdemo.net"
+#internal-ip-address: "concourse.pcfdemo.net"
+db_host: localhost
+db_port: 5432
+uaa_external_url: "https://concourse.pcfdemo.net:8443"
+uaa_internal_url: "https://concourse.pcfdemo.net:8443"
+#uaa_version: "74.9.0"
+#credhub_version: "2.5.7"
+postgres_version: "42"
+bpm_version: "1.1.8"
