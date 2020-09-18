@@ -1,13 +1,12 @@
 
 
-# concourse on AWS
+# deploying concourse on AWS
+
+## prepare target cloud env
+- run bbl: https://github.com/myminseok/bbl-template.git
 
 
-## prepare target env
-- run bbl
-
-
-## bosh cloud-config
+## set lb on bosh cloud-config
 
 ```
 bosh cloud-config > cloud-config.yml
@@ -54,8 +53,6 @@ vm_types:
 
 
 ## vi credhub-uaa-manifest.yml
-
-- 
 
 ``` 
 ---
