@@ -1,6 +1,7 @@
 
 
 # deploying concourse on AWS
+https://github.com/myminseok/pivotal-docs/blob/master/concourse-with-credhub.md
 
 ## prepare target cloud env
 - run bbl: https://github.com/myminseok/bbl-template.git
