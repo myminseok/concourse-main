@@ -1,4 +1,4 @@
-source ../bbl-aws/bosh-env.sh
+source ./set-boshenv.sh
 
 bosh deploy \
 -d concourse ./concourse-bosh-deployment/cluster/concourse.yml \
