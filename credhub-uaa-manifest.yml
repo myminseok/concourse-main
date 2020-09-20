@@ -162,11 +162,15 @@ releases:
   url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.9.0"
   sha1: "36d3a92588c33bc3a7ce54cd4714c96cc7d1bee2"
 
-- name: postgres
-  version: "((postgres_version))"
+- name: "postgres"
+  version: "42"
+  url: "https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=42"
+  sha1: "0a9e4ad424f2ad9611dd1d3f387cc12ed7b71ee4"
 
-- name: bpm
-  version: "((bpm_version))"
+- name: "bpm"
+  version: "1.1.8"
+  url: "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.1.8"
+  sha1: "c956394fce7e74f741e4ae8c256b480904ad5942"
 
 variables:
 - name: uaa_encryption_key

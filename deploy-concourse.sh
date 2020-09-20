@@ -13,4 +13,5 @@ bosh deploy \
 -o ./concourse-bosh-deployment/cluster/operations/tls-vars.yml  \
 -o ./concourse-bosh-deployment/cluster/operations/web-network-extension.yml  \
 -o ./concourse-bosh-deployment/cluster/operations/worker-ephemeral-disk.yml \
+-o ./concourse-bosh-deployment/cluster/operations/static-web.yml  \
 -o ./concourse-bosh-deployment/cluster/operations/credhub.yml
